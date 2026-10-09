@@ -10,5 +10,6 @@ public class EditorApp extends Application {
         // nouveau processus = pas de test en cours : le jeu doit démarrer avec ses vrais niveaux
         new LevelStore(this).clearTestLevel();
         NativeBridge.load(getFilesDir().getAbsolutePath());
+        registerActivityLifecycleCallbacks(new TestOverlay());
     }
 }

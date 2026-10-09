@@ -121,7 +121,7 @@ def patch(src, dst, spec_path=None):
         else:
             orig = w0
             prev = rd32(b, f - 4)
-            if prev not in (0xD65F03C0, 0xD503201F) and arm64.kind(prev) != "b" and (prev & 0xFFE0001F) != 0xD4200000:
+            if prev not in (0xD65F03C0, 0xD503201F) and arm64.kind(prev) != "b" and (prev & 0xFFFFFC1F) != 0xD61F0000 and (prev & 0xFFE0001F) != 0xD4200000:
                 log.append(f"  attention : l'instruction avant {hk['name']} (0x{prev:08x}) n'est ni ret ni b")
             try:
                 arm64.relocate(orig, f, hk["cave"] + 12)

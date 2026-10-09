@@ -19,7 +19,7 @@ public class GridView extends View {
     }
 
     private Level level;
-    private int tool = Level.WALL;
+    private int tool = Tiles.WALL;
     private Listener listener;
     private final Tiles tiles = new Tiles();
     private final Paint gridPaint = new Paint();
@@ -104,7 +104,7 @@ public class GridView extends View {
                     offX += fx - lastFx; offY += fy - lastFy;
                     lastFx = fx; lastFy = fy;
                     invalidate();
-                } else if (painting && tool != Level.ENTER && tool != Level.EXIT) {
+                } else if (painting && tool != Tiles.ENTER && tool != Tiles.EXIT) {
                     for (int i = 0; i < e.getHistorySize(); i++) paintAt(e.getHistoricalX(i), e.getHistoricalY(i));
                     paintAt(e.getX(), e.getY());
                 }
@@ -142,7 +142,7 @@ public class GridView extends View {
     }
 
     private void apply(int x, int y) {
-        if (level.set(x, y, tool)) {
+        if (level.place(x, y, Cell.fromRaw(tool))) {
             strokeChanged = true;
             invalidate();
             if (listener != null) listener.onLevelChanged();

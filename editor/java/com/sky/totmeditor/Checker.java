@@ -61,6 +61,13 @@ public final class Checker {
         return out;
     }
 
+    /** Messages d'une sévérité donnée (écrans qui n'ont pas besoin de la position). */
+    public static List<String> messages(Level l, int severity) {
+        List<String> out = new ArrayList<>();
+        for (Issue i : check(l)) if (i.severity == severity) out.add(i.message);
+        return out;
+    }
+
     public static boolean hasErrors(List<Issue> issues) {
         for (Issue i : issues) if (i.severity == ERROR) return true;
         return false;

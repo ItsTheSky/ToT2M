@@ -102,6 +102,27 @@ sections (517 morceaux du mode Arcade) : répété
 
 Outils : `python3 reference/scripts/dis.py <libil2cpp.so> <rva_hex> <n_instr> reference/il2cpp/script.json` désassemble avec les noms des cibles `bl`. Ouvrir `reference/il2cpp/DummyDll/Assembly-CSharp.dll` dans dotPeek donne les signatures, sans les corps.
 
+### 4bis. Découvertes v1 (désassemblage de la vraie libil2cpp.so 1.2.28)
+
+| Élément | Comportement vérifié |
+|---|---|
+| `GameStateController.instance` | statique @0x0 ; `_gameState` (byte) @+0x30 : 1 titre, 2 hub (`GameOverController`), 3 en jeu ; `activeScreen` @+0x158 |
+| `GameStateController.PlayStoryGame` 0x540410 | état 2 : `activeScreen.GetComponent<GameOverController>().PlayGame()` ; état 3 : `RestartGame()` ; état 1 : rien |
+| `GameOverController.PlayGame` 0x5FF1B8 | `set_runNextStage(false)`, musique, puis coroutine `PlayGameRoutine` qui passe `_gameState` à 3 et appelle `UpdateGameState` (pas de contrôle d'énergie) |
+| `GameOverController.BtnPlayLevelPressed(i)` | `set_activeStage(i)` puis `ShowStageInfo` (ou `ShowEnergyRefill` si énergie < 1) |
+| Choix du mode | `activeStage` ≥ 0 = stage (index 0-based), -1 = Arcade (`BtnPlayArcadePressed`) ; lu par `GameHudController.StartNewGame` -> `InitWithLevelIndex` |
+| `PrepareToExit` / `RestartGame` | -> `GameHudController.FadeOutContentAndEnableGates` (retour au hub) / `GameHudController.StartNewGame` |
+| `ProcessStageCompleted` 0x5F2B98 | coupe les touches, retire les bonus, `BlinkGame`, `ActivateLava(false)`, puis `Invoke` de `StageCompleted` |
+| `StageCompleted` 0x5F2C30 | `SaveGameResults`, énergie, `DataManager.StageCompleted(activeStage, étoiles)`, pièces, missions, analytics, `ShowStageResults` : tout l'enregistrement d'une victoire |
+| `SaveGameResults` 0x5EDF48 | énergie (`energyUsed`), meilleur score, classement, `allScore`, missions, niveau joueur, masques |
+| `ProcessPlayerDeath` 0x5F2978 | `ShakeGame`, `BlinkGame`, `ActivateLava(false)`, `RemoveAllPowerups`, puis `SaveGameResults` ou `Invoke` du popup de réanimation / défaite |
+| `GameController.SaveGame` | c'est la **réanimation** (« Save Me »), pas une sauvegarde |
+| `SetPause` 0x5F296C | écrit seulement `_gamePaused` @+0xD1, ignoré par `Update`/`FixedUpdate` : ne gèle pas le jeu |
+| `DisableTouches(b)` | écrit `touchesEnabled` @+0x248 |
+| `GenerateStage` | décompte 1 énergie si `!showTutorial` ; `wallActiveIndex = (stageIndex / 10) % 5` |
+| 1res instructions accrochées | Update `str d8,[sp,#-0x40]!`, StageCompleted `sub sp,sp,#0x50`, ProcessPlayerDeath `str x21,[sp,#-0x30]!`, SaveGameResults `str x23,[sp,#-0x40]!` : toutes indépendantes du PC |
+| Couleurs | 13 paires `mainColors`/`subColors` trouvées dans le `GameController` sérialisé (cf. `tools/extract_assets.py`) |
+
 ## 5. Architecture du prototype (à conserver dans l'esprit)
 
 1. **Patch statique** de `libil2cpp.so` (`editor/tools/patch_il2cpp.py`). `StageInfo` @0x50E734 devient :
@@ -112,7 +133,8 @@ Outils : `python3 reference/scripts/dis.py <libil2cpp.so> <rva_hex> <n_instr> re
 3. `hook_StageInfo` réimplémente l'original. Si `<filesDir>/test_level.bin` existe (même format qu'une entrée `stages`), il crée un `byte[]` via `il2cpp_array_new_specific` (classe reprise d'un niveau officiel) et renvoie le niveau de test.
 4. L'éditeur (même processus, même `filesDir`) écrit `test_level.bin` puis lance le jeu. Le fichier est supprimé à `onResume` de l'éditeur et au démarrage du processus.
 5. Manifeste : `application android:name=EditorApp`, activités éditeur avec `taskAffinity="com.sky.totmeditor"`, package renommé `com.happymagenta.fromcore.editor` (via `renameManifestPackage` d'apktool), `app_name` = "TotM Mod".
-6. Limites actuelles : il faut lancer un stage à la main ; la progression du stage remplacé est enregistrée ; seulement 7 outils.
+6. (v1) Patch généralisé piloté par `editor/tools/hooks.json` : la 1re instruction de chaque fonction devient `b CAVE_k` ; la cave (fin morte de l'ancien StageInfo, 0x50E750..0x50E7AC) fait `adrp/ldr x16 slot ; cbnz x16 -> br x16 partagé ; instr d'origine ; b F+4`. Slots : 0x1343A50 + 8*n (n = 0 StageInfo, 2..5 hooks), p_memsz RW + 0x40. Il reste 2 instructions libres dans la cave ; pour plus de hooks, candidats morts sur Android : méthodes d'instance de `Win32RegistryApi` (à vérifier).
+7. (v1) Lib native : tick sur `GameStateController.Update` (lancement direct : attend l'état 2 stable, `set_activeStage`, `PlayStoryGame`, repli `BtnPlayLevelPressed` + `BtnPlayPressed`, puis manuel) ; victoire et mort interceptées pendant un test ; `SaveGameResults` bloqué pendant toute la session de test ; énergie rendue quand le niveau de test est servi.
 
 ## 6. Build : pièges déjà rencontrés
 

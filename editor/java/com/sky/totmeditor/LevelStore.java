@@ -77,7 +77,7 @@ public final class LevelStore {
     // ------------------------------------------------------------ niveau de test lu par la lib native
     public File testFile() { return new File(ctx.getFilesDir(), "test_level.bin"); }
 
-    public void setTestLevel(Level l) throws IOException { writeBytes(testFile(), l.toGameBinary()); }
+    public void setTestLevel(Level l) throws IOException { writeBytes(testFile(), l.toTestBinary()); }
 
     public boolean clearTestLevel() { return testFile().delete(); }
 

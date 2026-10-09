@@ -93,6 +93,7 @@ public class LevelListActivity extends Activity {
     protected void onResume() {
         super.onResume();
         store.clearTestLevel();
+        NativeBridge.stopTest();
         refresh();
     }
 
@@ -195,9 +196,9 @@ public class LevelListActivity extends Activity {
             LevelStore.Entry e = entries.get(i);
             row.setBackground(Ui.round(0xFF1E1A2E, Ui.dp(row.getContext(), 10), 0, 0));
             ((TextView) row.getChildAt(0)).setText(e.level.name);
-            List<String> errs = e.level.validate();
+            List<String> errs = Checker.messages(e.level, Checker.ERROR);
             ((TextView) row.getChildAt(1)).setText(e.level.width + "×" + e.level.height
-                    + " · " + e.level.count(Level.DOT) + " points · " + e.level.count(Level.STAR) + " étoiles"
+                    + " · " + (e.level.count(BlockType.COIN) + e.level.count(BlockType.DOT)) + " points · " + e.level.count(BlockType.STAR) + " étoiles"
                     + (errs.isEmpty() ? " · prêt" : " · incomplet")
                     + " · " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date(e.modified)));
             row.setGravity(Gravity.START);

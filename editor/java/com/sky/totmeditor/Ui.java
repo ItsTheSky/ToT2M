@@ -24,6 +24,7 @@ final class Ui {
     static final int BG = 0xFF000000, PANEL = 0xFF0B0B12, PANEL2 = 0xFF14141F;
     static final int YELLOW = 0xFFFFE600, MAGENTA = 0xFFFF2E88, CYAN = 0xFF00E5FF, GREEN = 0xFF39FF14, RED = 0xFFFF3B3B;
     static final int TEXT = 0xFFF2F2F2, MUTED = 0xFF8A8AA0;
+    static final int BAR = PANEL2, ACCENT = YELLOW;
     static final int[] GROUP_COLORS = {0xFFFF2E88, 0xFF00E5FF, 0xFFFFE600, 0xFF39FF14, 0xFFFF7A00, 0xFFB026FF, 0xFFFFFFFF};
 
     /** Police « pixel » : monospace grasse, sans anticrénelage. */
@@ -46,6 +47,10 @@ final class Ui {
         d.setCornerRadius(radiusPx);
         if (strokePx > 0) d.setStroke(strokePx, stroke);
         return d;
+    }
+
+    static GradientDrawable round(int color, float radiusPx, int strokeColor, int strokePx) {
+        return frame(color, strokeColor, strokePx, Math.round(radiusPx));
     }
 
     static StateListDrawable neon(Context c, int accent, boolean filled) {
@@ -143,7 +148,7 @@ final class Ui {
     }
 
     static AlertDialog.Builder dialog(Context c) {
-        return new AlertDialog.Builder(c, android.R.style.Theme_DeviceDefault_Dialog_Alert);
+        return new AlertDialog.Builder(c, AlertDialog.THEME_DEVICE_DEFAULT_DARK);
     }
 
     static void toast(Context c, String s) { Toast.makeText(c, s, Toast.LENGTH_LONG).show(); }
@@ -178,6 +183,8 @@ final class Ui {
         i.putExtra(Intent.EXTRA_TEXT, text);
         a.startActivity(Intent.createChooser(i, "Partager « " + subject + " »"));
     }
+
+    static void share(Activity a, Level l) { shareText(a, l.name, l.toText()); }
 
     static void copy(Context c, String label, String text) {
         android.content.ClipboardManager cm = (android.content.ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);

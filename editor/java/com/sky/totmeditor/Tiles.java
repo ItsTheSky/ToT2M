@@ -7,7 +7,10 @@ import android.graphics.RectF;
 
 /** Outils de la palette et rendu des tuiles. */
 final class Tiles {
-    static final int[] TOOLS = {Level.WALL, Level.EMPTY, Level.DOT, Level.SPIKES, Level.STAR, Level.ENTER, Level.EXIT};
+    /** Valeurs brutes LevelTileType utilisées par la palette simple. */
+    static final int EMPTY = 0, ENTER = 1, EXIT = 2, WALL = 3, STAR = 4, SPIKES = 8, DOT = 19;
+
+    static final int[] TOOLS = {WALL, EMPTY, DOT, SPIKES, STAR, ENTER, EXIT};
     static final String[] TOOL_NAMES = {"Mur", "Vide", "Point", "Pics", "Étoile", "Départ", "Sortie"};
 
     static final int C_WALL = 0xFF3B2163, C_WALL_EDGE = 0xFFA06BFF, C_EMPTY = 0xFF0E0E16, C_DOT = 0xFFF5C518,
@@ -15,13 +18,13 @@ final class Tiles {
 
     static int color(int v) {
         switch (v) {
-            case Level.WALL: return C_WALL;
-            case Level.EMPTY: return C_EMPTY;
-            case Level.DOT: return C_DOT;
-            case Level.SPIKES: return C_SPIKE;
-            case Level.STAR: return C_STAR;
-            case Level.ENTER: return C_ENTER;
-            case Level.EXIT: return C_EXIT;
+            case WALL: return C_WALL;
+            case EMPTY: return C_EMPTY;
+            case DOT: return C_DOT;
+            case SPIKES: return C_SPIKE;
+            case STAR: return C_STAR;
+            case ENTER: return C_ENTER;
+            case EXIT: return C_EXIT;
             default: return C_OTHER;
         }
     }
@@ -40,8 +43,8 @@ final class Tiles {
 
     /** Dessine la case (x, y) du niveau dans le carré [px, py, px+s, py+s]. */
     void draw(Canvas c, Level l, int x, int y, float px, float py, float s) {
-        int v = l.get(x, y);
-        if (v == Level.WALL) {
+        int v = Cell.toRaw(l.get(x, y));
+        if (v == WALL) {
             fill.setColor(C_WALL);
             c.drawRect(px, py, px + s, py + s, fill);
             // liseré lumineux côté couloir, façon Tomb of the Mask
@@ -57,25 +60,25 @@ final class Tiles {
         c.drawRect(px, py, px + s, py + s, fill);
         float cx = px + s / 2, cy = py + s / 2;
         switch (v) {
-            case Level.EMPTY:
+            case EMPTY:
                 return;
-            case Level.DOT:
+            case DOT:
                 fill.setColor(C_DOT);
                 c.drawCircle(cx, cy, s * 0.13f, fill);
                 return;
-            case Level.STAR:
+            case STAR:
                 fill.setColor(C_STAR);
                 star(c, cx, cy, s * 0.42f);
                 return;
-            case Level.SPIKES:
+            case SPIKES:
                 spikes(c, l, x, y, px, py, s);
                 return;
-            case Level.ENTER:
-            case Level.EXIT:
+            case ENTER:
+            case EXIT:
                 fill.setColor(color(v));
                 r.set(px + s * 0.12f, py + s * 0.12f, px + s * 0.88f, py + s * 0.88f);
                 c.drawRoundRect(r, s * 0.18f, s * 0.18f, fill);
-                label(c, v == Level.ENTER ? "D" : "S", cx, cy, s, 0xFF000000);
+                label(c, v == ENTER ? "D" : "S", cx, cy, s, 0xFF000000);
                 return;
             default:
                 // tuile d'un niveau officiel non éditable ici (chauve-souris, canon, portail...) : conservée telle quelle
@@ -86,7 +89,7 @@ final class Tiles {
         }
     }
 
-    private static boolean open(Level l, int x, int y) { return l.inside(x, y) && l.get(x, y) != Level.WALL; }
+    private static boolean open(Level l, int x, int y) { return l.inside(x, y) && Cell.toRaw(l.get(x, y)) != WALL; }
 
     private void label(Canvas c, String t, float cx, float cy, float s, int col) {
         text.setColor(col);
@@ -109,10 +112,10 @@ final class Tiles {
     /** Pics plantés dans le premier mur voisin (le jeu calcule lui-même l'orientation). */
     private void spikes(Canvas c, Level l, int x, int y, float px, float py, float s) {
         fill.setColor(C_SPIKE);
-        int dir = l.inside(x, y + 1) && l.get(x, y + 1) == Level.WALL ? 0
-                : l.inside(x, y - 1) && l.get(x, y - 1) == Level.WALL ? 1
-                : l.inside(x - 1, y) && l.get(x - 1, y) == Level.WALL ? 2
-                : l.inside(x + 1, y) && l.get(x + 1, y) == Level.WALL ? 3 : 0;
+        int dir = l.inside(x, y + 1) && Cell.toRaw(l.get(x, y + 1)) == WALL ? 0
+                : l.inside(x, y - 1) && Cell.toRaw(l.get(x, y - 1)) == WALL ? 1
+                : l.inside(x - 1, y) && Cell.toRaw(l.get(x - 1, y)) == WALL ? 2
+                : l.inside(x + 1, y) && Cell.toRaw(l.get(x + 1, y)) == WALL ? 3 : 0;
         float h = s * 0.45f;
         path.reset();
         for (int i = 0; i < 3; i++) {

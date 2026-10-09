@@ -160,7 +160,7 @@ public class EditorActivity extends Activity implements GridView.Listener {
 
     private void restore(Level prev) {
         boolean resized = prev.width != level.width || prev.height != level.height;
-        level.width = prev.width; level.height = prev.height; level.lava = prev.lava; level.tiles = prev.tiles;
+        level.restoreFrom(prev);
         if (resized) grid.setLevel(level); else grid.invalidate();  // ne pas perdre le zoom en cours
     }
 
@@ -214,7 +214,7 @@ public class EditorActivity extends Activity implements GridView.Listener {
                     @Override public void onClick(android.content.DialogInterface d, int which) {
                         w.clearFocus(); h.clearFocus(); lv.clearFocus();  // valide une saisie clavier en cours
                         pushUndo(); trimUndo();
-                        if (w.getValue() != level.width || h.getValue() != level.height) level.resize(w.getValue(), h.getValue());
+                        if (w.getValue() != level.width || h.getValue() != level.height) { level.resize(w.getValue(), h.getValue(), 0, 1); level.sealBorder(); }
                         level.lava = lv.getValue();
                         grid.setLevel(level);
                         changed();
@@ -254,14 +254,14 @@ public class EditorActivity extends Activity implements GridView.Listener {
     }
 
     private void testInGame() {
-        List<String> errs = level.validate();
+        List<String> errs = Checker.messages(level, Checker.ERROR);
         if (!errs.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (String s : errs) sb.append("• ").append(s).append('\n');
             Ui.alert(this, "Niveau incomplet", sb.toString().trim());
             return;
         }
-        List<String> warns = level.warnings();
+        List<String> warns = Checker.messages(level, Checker.WARN);
         if (!warns.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (String s : warns) sb.append("• ").append(s).append('\n');
@@ -283,8 +283,10 @@ public class EditorActivity extends Activity implements GridView.Listener {
             Ui.alert(this, "Impossible d'écrire le niveau de test", e.toString());
             return;
         }
-        if (Ui.launchGame(this)) {
-            Ui.toast(this, "Lance n'importe quel niveau du mode Stages : c'est « " + level.name + " » qui sera joué (la progression de ce stage sera comptée).\nReviens dans l'éditeur pour désactiver le test.");
+        Prefs.setTestingId(this, id);
+        NativeBridge.startTest(Prefs.supportStage(this), Prefs.launchMode(this));
+        if (Ui.launchGame(this) && Prefs.launchMode(this) == Prefs.LAUNCH_MANUAL) {
+            Ui.toast(this, "Lance n'importe quel niveau du mode Stages : c'est « " + level.name + " » qui sera joué.");
         }
     }
 
@@ -299,5 +301,6 @@ public class EditorActivity extends Activity implements GridView.Listener {
         super.onResume();
         // retour du jeu : on désactive le niveau de test pour que le jeu redevienne normal
         if (store != null) store.clearTestLevel();
+        NativeBridge.stopTest();
     }
 }
