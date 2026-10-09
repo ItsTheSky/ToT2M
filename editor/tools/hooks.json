@@ -1,0 +1,27 @@
+{
+  "_doc": "Patch statique de libil2cpp.so (Tomb of the Mask 1.2.28, arm64). Lu par patch_il2cpp.py (patch + en-tête C pour la lib native). Voir CLAUDE.md §5.",
+  "rw_memsz": "0x1D3060",
+  "slot_base": "0x1343A50",
+  "slot_area": "0x40",
+  "stageinfo": {
+    "rva": "0x50E734",
+    "expected": "f657bda9f44f01a9fd7b02a9fd830091",
+    "patch": "b07100b0102a45f9500000b400021fd6001040f9e2031faae64d1e14",
+    "slot": 0
+  },
+  "cave": {
+    "_doc": "Fin de l'ancien corps de DataManager.StageInfo, morte depuis le patch (23 instructions).",
+    "start": "0x50E750",
+    "end": "0x50E7AC"
+  },
+  "hooks": [
+    {"name": "GameStateController_Update", "rva": "0x53F2AC", "slot": 2,
+     "_doc": "tick sur le thread Unity : lancement direct, commandes de l'overlay"},
+    {"name": "GameController_StageCompleted", "rva": "0x5F2C30", "slot": 3,
+     "_doc": "victoire : interceptée pendant un test (pas d'étoiles, pas de déblocage)"},
+    {"name": "GameController_ProcessPlayerDeath", "rva": "0x5F2978", "slot": 4,
+     "_doc": "mort : interceptée pendant un test (pas de popup de réanimation ni de défaite)"},
+    {"name": "GameController_SaveGameResults", "rva": "0x5EDF48", "slot": 5,
+     "_doc": "filet de sécurité : aucune écriture de résultats pendant un test"}
+  ]
+}
