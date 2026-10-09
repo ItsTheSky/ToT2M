@@ -1,0 +1,10 @@
+# Données du jeu : jamais dans le dépôt (public). Copier le dossier reference/ du pack.
+/reference/*
+!/reference/README.md
+!/reference/scripts/
+/input/*.apk
+editor/build/
+editor/debug.keystore
+*.pyc
+__pycache__/
+/out/
