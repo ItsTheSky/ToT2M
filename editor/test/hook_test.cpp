@@ -156,10 +156,10 @@ int main() {
     assert(origCalls[3] == 1);
     calls.clear();
     hook_ProcessPlayerDeath(fakeGc, nullptr, nullptr);
-    assert(origCalls[2] == 1 && g_state == T_DEAD && called("GameController.SetPause") && called("GameController.DisableTouches"));
+    assert(origCalls[2] == 1 && g_state == T_DEAD && called("GameController.ActivateLava") && called("GameController.DisableTouches") && called("GameController.ShakeGameWithRotation"));
     hook_ProcessPlayerDeath(fakeGc, nullptr, nullptr);
     assert(origCalls[2] == 1);
-    printf("pendant le test : SaveGameResults bloqué, mort interceptée (pause, touches coupées) OK\n");
+    printf("pendant le test : SaveGameResults bloqué, mort interceptée (touches coupées, lave arrêtée, secousse) OK\n");
 
     // ---- rejouer : RestartGame puis victoire interceptée
     int ack = g_cmdAck;

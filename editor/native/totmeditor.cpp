@@ -246,11 +246,21 @@ template <typename F> static F orig(int hook) {
     return g_origOverride[hook] ? (F)g_origOverride[hook] : (F)(g_base + TOTM_HOOKS[hook].tramp);
 }
 
-static void pause_game(void *gc) {
-    bool t = true;
-    void *args[1] = {&t};
-    invoke("GameController", "DisableTouches", gc, 1, args);
-    invoke("GameController", "SetPause", gc, 1, args);
+// Fin de partie pendant un test : on garde le « visuel » de ProcessPlayerDeath (désassemblé :
+// ShakeGame, BlinkGame, ActivateLava(false), RemoveAllPowerups) sans SaveGameResults ni popup.
+// SetPause n'écrit qu'un drapeau ignoré par Update/FixedUpdate : la lave s'arrête via ActivateLava(false).
+static void freeze_game(void *gc, bool shake) {
+    bool t = true, f = false;
+    void *at[1] = {&t};
+    void *af[1] = {&f};
+    invoke("GameController", "DisableTouches", gc, 1, at);
+    invoke("GameController", "ActivateLava", gc, 1, af);
+    invoke("GameController", "RemoveAllPowerups", gc, 0, nullptr);
+    if (shake) {
+        float amp = 1.f;
+        void *as[2] = {&amp, &f};
+        invoke("GameController", "ShakeGameWithRotation", gc, 2, as);
+    }
 }
 
 static bool launch_attempt(void *gsc) {
@@ -356,7 +366,7 @@ extern "C" __attribute__((visibility("default")))
 void hook_StageCompleted(void *self, void *m) {
     if (g_session.load() && g_state.load() == T_RUNNING) {
         set_state(T_WON);
-        pause_game(self);
+        freeze_game(self, false);
         LOGI("test : sortie atteinte (victoire interceptée, rien n'est enregistré)");
         return;
     }
@@ -369,7 +379,7 @@ void hook_ProcessPlayerDeath(void *self, void *killer, void *m) {
     if (g_session.load() && (st == T_RUNNING || st == T_DEAD || st == T_WON)) {
         if (st == T_RUNNING) {
             set_state(T_DEAD);
-            pause_game(self);
+            freeze_game(self, true);
             LOGI("test : mort (interceptée, ni réanimation ni défaite)");
         }
         return;
