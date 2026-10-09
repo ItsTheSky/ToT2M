@@ -22,6 +22,9 @@ if "com.sky.totmeditor" not in m:
             android:taskAffinity="com.sky.totmeditor" android:theme="@android:style/Theme.Material.NoActionBar"
             android:screenOrientation="portrait" android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false"/>
+        <activity android:name="com.sky.totmeditor.OfficialPickerActivity" android:label="Stages officiels"
+            android:taskAffinity="com.sky.totmeditor" android:theme="@android:style/Theme.Material.NoActionBar"
+            android:screenOrientation="portrait" android:exported="false"/>
     </application>'''
     m = m.replace("</application>", activities, 1)
 open(path, "w", encoding="utf-8").write(m)

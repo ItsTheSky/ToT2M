@@ -118,19 +118,19 @@ public class LevelListActivity extends Activity {
         startActivity(new Intent(this, EditorActivity.class).putExtra(EditorActivity.EXTRA_ID, id));
     }
 
+    private static final int REQ_OFFICIAL = 1;
+
     private void pickOfficial() {
-        final List<Level> off = store.officialStages();
-        if (off.isEmpty()) { Ui.alert(this, "Indisponible", "Les niveaux officiels ne sont pas embarqués dans cet APK."); return; }
-        final NumberPicker np = Ui.picker(this, 1, off.size(), 1);
-        new AlertDialog.Builder(this).setTitle("Copier un niveau officiel").setView(np)
-                .setNegativeButton("Annuler", null)
-                .setPositiveButton("Copier", new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface d, int which) {
-                        np.clearFocus();
-                        Level src = off.get(np.getValue() - 1);
-                        create(src.copy("Stage " + np.getValue() + " (copie)"));
-                    }
-                }).show();
+        startActivityForResult(new Intent(this, OfficialPickerActivity.class), REQ_OFFICIAL);
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != REQ_OFFICIAL || res != RESULT_OK || data == null) return;
+        int i = data.getIntExtra(OfficialPickerActivity.EXTRA_INDEX, -1);
+        List<Level> off = store.officialStages();
+        if (i >= 0 && i < off.size()) create(off.get(i).copy("Stage " + (i + 1) + " (copie)"));
     }
 
     private void importClipboard() {
