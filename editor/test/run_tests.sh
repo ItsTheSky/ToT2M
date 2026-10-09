@@ -17,6 +17,9 @@ python3 "$HERE/tools/patch_il2cpp.py" header "$B/gen/hooks_gen.h" >/dev/null
 g++ -std=c++17 -Wall -I "$HERE/test/stub" -I "$HERE/test/jni" -I "$B/gen" "$HERE/test/hook_test.cpp" -o "$B/hook_test" -ldl -lpthread
 "$B/hook_test" 2>/dev/null
 
+echo "== extraction des couleurs (données synthétiques)"
+python3 "$HERE/test/assets_test.py"
+
 echo "== modèle de niveaux (817 niveaux officiels)"
 javac -encoding UTF-8 -d "$B/jvm" $(find "$HERE/java" -name '*.java' -exec grep -L '^import android' {} +) "$HERE/test/LevelTest.java" 2>&1 | grep -v JAVA_TOOL || true
 java -cp "$B/jvm" LevelTest "$REF/levels" 2>&1 | grep -v JAVA_TOOL
